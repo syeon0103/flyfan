@@ -1,17 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ArrowLeft, MessageCircle, Heart as HeartIcon } from 'lucide-react'
+import {  MessageCircle, Heart as HeartIcon } from 'lucide-react'
 import TopAppBar from '@/components/layout/TopAppBar'
 import BottomNavBar from '@/components/layout/BottomNavBar'
 import Button from '@/components/ui/Button'
-import Textarea from '@/components/ui/Textarea'
 import Tag from '@/components/ui/Tag'
 import { useRouter } from 'next/navigation'
 
 export default function MatchingPage() {
   const router = useRouter()
-  const [commentText, setCommentText] = useState('')
   const [sortBy, setSortBy] = useState('latest')
 
   return (

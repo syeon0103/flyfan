@@ -16,7 +16,6 @@ export default function TimelineItem({
   date,
   title,
   description,
-  isFirst = false,
   isLast = false,
   featured = false,
   onEdit,

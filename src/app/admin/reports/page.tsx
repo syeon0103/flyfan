@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Flag, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { ChevronLeft, Flag, Clock, CheckCircle,  } from 'lucide-react'
 import FandomIcon from '@/components/ui/FandomIcon'
 import {
   getReportStats,
