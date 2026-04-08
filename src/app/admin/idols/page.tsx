@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2, X as XIcon, Check, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, X as XIcon, Check, AlertCircle, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import FandomIcon from '@/components/ui/FandomIcon'
 import { getIdols, createIdol, updateIdol, deleteIdol, type Idol } from '@/lib/api'
@@ -413,12 +413,13 @@ export default function AdminIdolsPage() {
           style={{ maxWidth: '680px' }}
         >
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-1.5">
-              <FandomIcon color="#FFA33B" size={18} />
-              <span className="text-[15px] font-bold text-zinc-900">flyfan</span>
+            <Link href="/admin" className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-zinc-100">
+              <ChevronLeft size={18} className="text-zinc-600" />
             </Link>
-            <span className="text-zinc-300">/</span>
-            <span className="text-[13px] font-medium text-zinc-500">아이돌 관리</span>
+            <div className="flex items-center gap-2">
+              <FandomIcon color="#FFA33B" size={16} />
+              <span className="text-[15px] font-bold text-zinc-900">아이돌 관리</span>
+            </div>
           </div>
           <button
             onClick={() => { setFormMode('add'); setEditTarget(null); setError(null) }}

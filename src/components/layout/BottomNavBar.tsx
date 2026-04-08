@@ -3,9 +3,9 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, MessageCircle, User, Heart, AlertCircle } from 'lucide-react'
+import { Home, Bookmark, Bell, User, AlertCircle } from 'lucide-react'
 
-export type NavVariant = 'default' | 'saved' | 'admin'
+export type NavVariant = 'default' | 'admin'
 
 interface NavItem {
   name: string
@@ -15,23 +15,15 @@ interface NavItem {
 }
 
 const defaultNavItems: NavItem[] = [
-  { name: 'home', label: '홈', href: '/', Icon: Home },
-  { name: 'search', label: '검색', href: '/search', Icon: Search },
-  { name: 'chat', label: '채팅', href: '/chat', Icon: MessageCircle },
-  { name: 'profile', label: '프로필', href: '/profile/settings', Icon: User },
-]
-
-const savedNavItems: NavItem[] = [
-  { name: 'home', label: '홈', href: '/', Icon: Home },
-  { name: 'search', label: '검색', href: '/search', Icon: Search },
-  { name: 'saved', label: '저장', href: '/saved', Icon: Heart },
-  { name: 'profile', label: '프로필', href: '/profile/settings', Icon: User },
+  { name: 'home',          label: '홈',    href: '/',                  Icon: Home },
+  { name: 'bookmarks',     label: '북마크', href: '/saved',             Icon: Bookmark },
+  { name: 'notifications', label: '알림',   href: '/notifications',     Icon: Bell },
+  { name: 'profile',       label: '프로필', href: '/profile/settings',  Icon: User },
 ]
 
 const adminNavItems: NavItem[] = [
-  { name: 'home', label: '홈', href: '/', Icon: Home },
-  { name: 'search', label: '검색', href: '/search', Icon: Search },
-  { name: 'report', label: '신고', href: '/report', Icon: AlertCircle },
+  { name: 'home',    label: '홈',   href: '/',                 Icon: Home },
+  { name: 'report',  label: '신고', href: '/report',           Icon: AlertCircle },
   { name: 'profile', label: '프로필', href: '/profile/settings', Icon: User },
 ]
 
@@ -42,12 +34,7 @@ interface BottomNavBarProps {
 export default function BottomNavBar({ variant = 'default' }: BottomNavBarProps) {
   const pathname = usePathname()
 
-  const navItems =
-    variant === 'saved'
-      ? savedNavItems
-      : variant === 'admin'
-      ? adminNavItems
-      : defaultNavItems
+  const navItems = variant === 'admin' ? adminNavItems : defaultNavItems
 
   function isActive(item: NavItem): boolean {
     if (item.href === '/') return pathname === '/'
@@ -80,7 +67,7 @@ export default function BottomNavBar({ variant = 'default' }: BottomNavBarProps)
               className="flex flex-col items-center justify-center gap-1 w-full h-full transition-colors"
             >
               <Icon
-                size={active ? 20 : 20}
+                size={20}
                 strokeWidth={active ? 2.5 : 1.8}
                 className={active ? 'text-zinc-900' : 'text-zinc-300'}
               />

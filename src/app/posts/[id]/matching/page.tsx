@@ -20,7 +20,6 @@ export default function MatchingPage() {
         showBack
         onBackClick={() => router.back()}
         title="모집글"
-        showNotification
         showAvatar
       />
 

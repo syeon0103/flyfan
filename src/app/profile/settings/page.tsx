@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TopAppBar from '@/components/layout/TopAppBar'
 import BottomNavBar from '@/components/layout/BottomNavBar'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   getProfileSettings,
   saveProfileSettings,
@@ -13,6 +14,24 @@ import {
   type PersonaSlot,
   type TimelineItem,
 } from '@/lib/api'
+
+// ─── 로그아웃 버튼 ────────────────────────────────────────────────────────────
+
+function LogoutButton({ onLogout }: { onLogout: () => void }) {
+  return (
+    <button
+      onClick={onLogout}
+      className="flex items-center justify-center w-full py-4 rounded-[20px] text-[16px] font-bold transition-opacity hover:opacity-70"
+      style={{
+        backgroundColor: '#f4f4f5',
+        color: '#52525b',
+      }}
+      aria-label="로그아웃"
+    >
+      로그아웃
+    </button>
+  )
+}
 
 // ─── 페르소나 슬롯 ────────────────────────────────────────────────────────────
 
@@ -75,34 +94,57 @@ function PersonaSlotCard({ slot, isActive, onSelect }: PersonaSlotCardProps) {
 
 interface TimelineCardProps {
   item: TimelineItem
+  isLast: boolean
 }
 
-function TimelineCard({ item }: TimelineCardProps) {
+function TimelineCard({ item, isLast }: TimelineCardProps) {
   return (
-    <article
-      className="flex gap-4 p-5 rounded-[20px]"
-      style={{
-        backgroundColor: item.isFeatured ? '#ffffff' : '#fafafa',
-        boxShadow: item.isFeatured ? '0px 8px 30px 0px rgba(0,0,0,0.04)' : 'none',
-        border: item.isFeatured ? '1px solid #f4f4f5' : 'none',
-      }}
-      aria-label={`타임라인: ${item.title}`}
-    >
-      <div
-        className="flex items-center justify-center w-10 h-10 rounded-[14px] shrink-0"
-        style={{ backgroundColor: '#f4f4f5' }}
-        aria-hidden="true"
-      >
-        <span className="text-lg">{item.emoji}</span>
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-2">
-          <span className="text-[14px] font-bold text-zinc-900">{item.title}</span>
+    <div className="flex gap-4">
+      {/* 왼쪽: 아이콘 + 연결선 */}
+      <div className="flex flex-col items-center shrink-0" style={{ width: 40 }}>
+        <div
+          className="flex items-center justify-center w-10 h-10 rounded-[14px] shrink-0 z-10"
+          style={{
+            backgroundColor: item.isFeatured ? '#18181b' : '#f4f4f5',
+            boxShadow: item.isFeatured ? '0px 4px 12px rgba(24,24,27,0.2)' : 'none',
+          }}
+          aria-hidden="true"
+        >
+          <span className="text-lg">{item.emoji}</span>
         </div>
-        <span className="text-[11px] text-zinc-400">{item.date}</span>
-        <p className="text-[12px] text-zinc-600 leading-[18px] mt-0.5">{item.description}</p>
+        {!isLast && (
+          <div
+            className="w-px flex-1 mt-2"
+            style={{
+              background: 'linear-gradient(to bottom, #e4e4e7 0%, transparent 100%)',
+              minHeight: 24,
+            }}
+            aria-hidden="true"
+          />
+        )}
       </div>
-    </article>
+
+      {/* 오른쪽: 내용 */}
+      <article
+        className="flex-1 pb-6"
+        aria-label={`타임라인: ${item.title}`}
+      >
+        <div
+          className="p-4 rounded-[16px]"
+          style={{
+            backgroundColor: item.isFeatured ? '#ffffff' : '#fafafa',
+            boxShadow: item.isFeatured ? '0px 4px 20px rgba(0,0,0,0.06)' : 'none',
+            border: item.isFeatured ? '1px solid #f4f4f5' : '1px solid transparent',
+          }}
+        >
+          <div className="flex items-center justify-between gap-2 mb-0.5">
+            <span className="text-[14px] font-bold text-zinc-900">{item.title}</span>
+            <span className="text-[11px] text-zinc-400 shrink-0">{item.date}</span>
+          </div>
+          <p className="text-[12px] text-zinc-500 leading-[18px]">{item.description}</p>
+        </div>
+      </article>
+    </div>
   )
 }
 
@@ -135,22 +177,43 @@ function SafeZoneTag({ label, onRemove }: SafeZoneTagProps) {
 
 export default function ProfileSettingsPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading, signOut } = useAuth()
   const [profile, setProfile] = useState<ProfileSettings | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
+
+  // 로그인 안 했으면 로그인 페이지로
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login')
+    }
+  }, [authLoading, user, router])
 
   useEffect(() => {
+    if (authLoading || !user) return
     async function load() {
       setIsLoading(true)
       try {
         const data = await getProfileSettings()
+        // 첫 번째 페르소나 기본 선택 보장
+        const hasActive = data.personaSlots.some((s) => s.isActive && !s.isEmpty)
+        if (!hasActive) {
+          const firstReal = data.personaSlots.find((s) => !s.isEmpty)
+          if (firstReal) {
+            data.personaSlots = data.personaSlots.map((s) => ({
+              ...s,
+              isActive: s.id === firstReal.id,
+            }))
+          }
+        }
         setProfile(data)
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [])
+  }, [authLoading, user])
 
   const handlePersonaSelect = useCallback((id: string) => {
     setProfile((prev) => {
@@ -174,24 +237,70 @@ export default function ProfileSettingsPage() {
     setIsSaving(true)
     try {
       await saveProfileSettings(profile)
-      router.back()
+      // 저장 후 데이터 재조회 (리다이렉트 없이 현재 페이지 유지)
+      const updated = await getProfileSettings()
+      const hasActive = updated.personaSlots.some((s) => s.isActive && !s.isEmpty)
+      if (!hasActive) {
+        const first = updated.personaSlots.find((s) => !s.isEmpty)
+        if (first) {
+          updated.personaSlots = updated.personaSlots.map((s) => ({
+            ...s, isActive: s.id === first.id,
+          }))
+        }
+      }
+      setProfile(updated)
+      setIsRegistering(false)
     } finally {
       setIsSaving(false)
     }
   }
 
-  const activeSlot = profile?.personaSlots.find((s) => s.isActive)
+  const handleLogout = async () => {
+    await signOut()
+    router.replace('/login')
+  }
+
+  const activeSlot = profile?.personaSlots.find((s) => s.isActive && !s.isEmpty)
+  const hasFandomProfile = isRegistering || (profile
+    ? !!(profile.favoriteIdol || profile.mbti || profile.keywords.length > 0 || profile.timeline.length > 0)
+    : false)
 
   return (
     <>
       <TopAppBar showBack onBackClick={() => router.back()} showAvatar />
 
       <main className="pb-[128px] pt-6 px-5">
-        {isLoading || !profile ? (
+        {authLoading || isLoading || !profile ? (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="h-20 rounded-[20px] bg-zinc-100 animate-pulse" aria-hidden="true" />
             ))}
+          </div>
+        ) : !hasFandomProfile ? (
+          /* ── 덕질 프로필 없음 → 등록 유도 ── */
+          <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
+            <div className="text-5xl" aria-hidden="true">💎</div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[20px] font-bold text-zinc-900 leading-[28px]">
+                나의 덕질 데이터를 등록해주세요!
+              </h2>
+              <p className="text-[14px] font-medium text-zinc-500 leading-[20px] max-w-[280px]">
+                최애, MBTI, 덕질 키워드를 입력하면 잘 맞는 덕메·비계친을 찾을 수 있어요.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsRegistering(true)}
+              className="flex items-center justify-center w-full max-w-[280px] py-4 rounded-[20px] text-[16px] font-bold text-white"
+              style={{
+                backgroundColor: '#18181b',
+                boxShadow: '0px 10px 15px -3px rgba(24,24,27,0.1)',
+              }}
+            >
+              덕질 프로필 등록하기
+            </button>
+            <div className="w-full max-w-[280px]">
+              <LogoutButton onLogout={handleLogout} />
+            </div>
           </div>
         ) : (
           <>
@@ -204,6 +313,25 @@ export default function ProfileSettingsPage() {
                 나만의 덕질 정체성을 설정하세요.
               </p>
             </header>
+
+            {/* ── 내가 쓴 글 바로가기 ── */}
+            <Link href="/profile/my-posts">
+              <div
+                className="flex items-center justify-between px-5 py-4 rounded-[20px] mb-8 hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: '#18181b' }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">✍️</span>
+                  <div>
+                    <p className="text-[14px] font-bold text-white">내가 쓴 글</p>
+                    <p className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                      덕메 · 비계친 모집글 모아보기
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-white/40" />
+              </div>
+            </Link>
 
             {/* ── 페르소나 슬롯 ── */}
             <section className="mb-8" aria-label="페르소나 슬롯">
@@ -310,9 +438,9 @@ export default function ProfileSettingsPage() {
                   </button>
                 </Link>
               </div>
-              <div className="flex flex-col gap-3">
-                {profile.timeline.map((item) => (
-                  <TimelineCard key={item.id} item={item} />
+              <div className="flex flex-col">
+                {profile.timeline.map((item, idx) => (
+                  <TimelineCard key={item.id} item={item} isLast={idx === profile.timeline.length - 1} />
                 ))}
               </div>
             </section>
@@ -360,6 +488,11 @@ export default function ProfileSettingsPage() {
                 '저장하기'
               )}
             </button>
+
+            {/* ── 로그아웃 버튼 ── */}
+            <div className="mt-3">
+              <LogoutButton onLogout={handleLogout} />
+            </div>
           </>
         )}
       </main>

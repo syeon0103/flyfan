@@ -320,7 +320,7 @@ export default function ReportPage() {
   const handleSubmit = async (reason: string, description: string) => {
     setIsSubmitting(true)
     try {
-      await submitReport(reason, description)
+      await submitReport('', reason, description)
       setSubmitted(true)
       setShowModal(false)
     } finally {
