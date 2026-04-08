@@ -10,8 +10,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
  * 실제 프로젝트에서는 `supabase gen types typescript` 로 자동 생성된
  * Database 타입을 createClient<Database> 에 전달하세요.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 /**
  * Supabase 연결 여부 확인
